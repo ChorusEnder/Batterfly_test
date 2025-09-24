@@ -17,9 +17,10 @@ float PIDCalculate(PID_Instance_s *pid, float measure, float target)
     pid->err[0] = target - measure;
 
     //计算PID,采用增量式PID
-    float output = pid->kp * pid->err[0] - pid->ki * pid->err[1] + pid->kd * pid->err[2];
+    pid->delta_output = pid->kp * (pid->err[0] - pid->err[1]) + pid->ki * pid->err[0] + pid->kd * (pid->err[0] - 2 * pid->err[1] + pid->err[2]);
+    pid->output += pid->delta_output;
 
     OutputLimit(pid);
-    
-    return output;
+
+    return pid->output;
 }

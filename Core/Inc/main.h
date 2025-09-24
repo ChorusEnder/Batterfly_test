@@ -31,8 +31,10 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "as5600.h"
-#include "motor.h"
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -58,6 +60,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define PC13_Pin GPIO_PIN_13
+#define PC13_GPIO_Port GPIOC
 #define M_L1_Pin GPIO_PIN_6
 #define M_L1_GPIO_Port GPIOA
 #define M_L2_Pin GPIO_PIN_7

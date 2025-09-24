@@ -4,6 +4,7 @@
         "stm32f1xx_it.h": "c",
         "motor.h": "c",
         "main.h": "c",
-        "pid.h": "c"
+        "pid.h": "c",
+        "cmsis_os.h": "c"
     }
 }

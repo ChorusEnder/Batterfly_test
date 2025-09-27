@@ -5,6 +5,7 @@
         "motor.h": "c",
         "main.h": "c",
         "pid.h": "c",
-        "cmsis_os.h": "c"
+        "cmsis_os.h": "c",
+        "butterfly.h": "c"
     }
 }

@@ -15,7 +15,7 @@
             "interface": "swd",//所用芯片接口类型
             "svdFile": "STM32F103xx.svd",//查表找对应的对应芯片型号对应的
             "device": "STM32F103C8",//改对应的芯片类型
-            // "rtos": "FreeRTOS",
+            "rtos": "FreeRTOS",
             "liveWatch": {
                 "enabled": true,
                 "samplesPerSecond": 4

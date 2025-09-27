@@ -15,18 +15,24 @@ typedef enum {
     MOTOR_DIR_REVERSE = 1,
 } Motor_Reverse_Flag_e;
 
+typedef enum {
+    OPEN_LOOP = 0,
+    CLOSE_LOOP = 1,
+} Loop_Type_e;
+
 //电机设置
 typedef struct {
     Motor_Reverse_Flag_e reverse; // 反转标志
 } Motor_Setting_s;
 
+//pwm时钟,通道配置
 typedef struct {
     TIM_HandleTypeDef *htim;
     uint32_t channel1;
     uint32_t channel2;
 } Motor_PWM_Config_s;
 
-
+//电机测量值
 typedef struct {
     float angle;
     float speed;
@@ -34,7 +40,8 @@ typedef struct {
 
 //电机控制器
 typedef struct {
-    float pid_ref;
+    Loop_Type_e loop_type;
+    float ref;
     PID_Instance_s angle_pid;
 } Motor_Controller_s;
 
@@ -54,5 +61,7 @@ typedef struct {
 
 Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config);
 void MotorControl();
+
+void MotorSetRef(Motor_Instance_s *motor, float ref);
 
 #endif

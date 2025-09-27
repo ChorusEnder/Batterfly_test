@@ -1,11 +1,12 @@
 
 #include "motor.h"
 
+static uint8_t idx = 0;
 //模块'motor'的私有变量,用于保存电机实例的地址
 static Motor_Instance_s *motor_instance[MOTOR_COUNT] = {0};
 
 /**
- * @brief 电机初始化函数,由于一个电机需要两个PWM信号操作,后面考虑采用电机实例
+ * @brief 电机初始化函数
  * 
  */
 Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config)
@@ -13,10 +14,13 @@ Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config)
     Motor_Instance_s *instance = (Motor_Instance_s *)malloc(sizeof(Motor_Instance_s));
     memset(instance, 0, sizeof(Motor_Instance_s));
 
-    instance->pwm_config = config->pwm_config;
     instance->controller.angle_pid = config->controller.angle_pid;
     instance->setting = config->setting;
+    instance->pwm_config = config->pwm_config;
+    HAL_TIM_PWM_Start(instance->pwm_config.htim, instance->pwm_config.channel1);
+    HAL_TIM_PWM_Start(instance->pwm_config.htim, instance->pwm_config.channel2);
 
+    motor_instance[idx++] = instance;
     return instance;
 }
 
@@ -65,17 +69,26 @@ void MotorControl()
         controller = &motor->controller;
         measures = &motor->measures;
         pwm_config = &motor->pwm_config;
+        pid_ref = controller->ref;
 
         //角度环计算
-        measure = measures->angle;
-        pid_ref = controller->pid_ref;
-        pid_ref = PIDCalculate(&controller->angle_pid, measure, pid_ref);
+        if (controller->loop_type == OPEN_LOOP) {
+        }
+        else if (controller->loop_type == CLOSE_LOOP) {
+            measure = measures->angle;
+            pid_ref = PIDCalculate(&controller->angle_pid, measure, pid_ref);
+        }
 
         if (setting->reverse == MOTOR_DIR_REVERSE) {
-            pid_ref = -pid_ref;
+            pid_ref *= -1;
         }
 
         MotorDrive((int16_t)pid_ref, pwm_config);
 
     }
+}
+
+void MotorSetRef(Motor_Instance_s *motor, float ref)
+{
+    motor->controller.ref = ref;
 }

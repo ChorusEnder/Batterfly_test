@@ -5,7 +5,7 @@
 #include "pid.h"
 
 //比较寄存器的值,根据实际设置更改
-#define VALUE_COMPARE 1000
+#define VALUE_COMPARE 100
 #define MOTOR_COUNT 4
 
 extern TIM_HandleTypeDef htim3;

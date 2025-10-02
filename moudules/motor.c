@@ -64,6 +64,7 @@ void MotorControl()
     for(int i = 0; i < MOTOR_COUNT; i++)
     {
         if(motor_instance[i] == NULL) break;
+        
         motor = motor_instance[i];
         setting = &motor->setting;
         controller = &motor->controller;

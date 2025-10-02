@@ -35,7 +35,7 @@ void Butterfly_Init()
 void Butterfly_Task()
 {
 
-    speed1 = 0;
+    speed1 = 30;
     MotorSetRef(motor1, speed1);
     angle1 = AS5600_GetAngle(&hi2c1);
 

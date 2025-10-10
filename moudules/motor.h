@@ -5,7 +5,7 @@
 #include "pid.h"
 
 //比较寄存器的值,根据实际设置更改
-#define VALUE_COMPARE 100
+#define VALUE_COMPARE 100 -1
 #define MOTOR_COUNT 4
 
 extern TIM_HandleTypeDef htim3;
@@ -16,14 +16,12 @@ typedef enum {
 } Motor_Reverse_Flag_e;
 
 typedef enum {
-    OPEN_LOOP = 0,
-    CLOSE_LOOP = 1,
-} Loop_Type_e;
+    OPEN_LOOP = 0b0000,
+    SPEED_LOOP = 0b0001,
+    ANGLE_LOOP = 0b0010,
 
-//电机设置
-typedef struct {
-    Motor_Reverse_Flag_e reverse; // 反转标志
-} Motor_Setting_s;
+    SPEED_AND_ANGLE_LOOP = 0b0011,
+} Loop_Type_e;
 
 //pwm时钟,通道配置
 typedef struct {
@@ -36,24 +34,33 @@ typedef struct {
 typedef struct {
     float angle;
     float speed;
+    float angle_last;
 } Motor_Measures_s;
 
 //电机控制器
 typedef struct {
+    float pid_ref;
     Loop_Type_e loop_type;
-    float ref;
     PID_Instance_s angle_pid;
+    PID_Instance_s speed_pid;
+
 } Motor_Controller_s;
 
+//电机设置
 typedef struct {
-    Motor_PWM_Config_s pwm_config;  //对应的时钟句柄指针和通道
+    I2C_HandleTypeDef *hi2c;//iic句柄指针
+    Motor_PWM_Config_s pwm_config;
+    Motor_Reverse_Flag_e reverse; // 反转标志
+} Motor_Setting_s;
+
+
+typedef struct {
     Motor_Setting_s setting;
     Motor_Measures_s measures;
     Motor_Controller_s controller;
 } Motor_Instance_s;
 
 typedef struct {
-    Motor_PWM_Config_s pwm_config;
     Motor_Controller_s controller;
     Motor_Setting_s setting;
 } Motor_Init_Config_s;

@@ -1,5 +1,7 @@
 
 #include "motor.h"
+#include "as5600.h"
+#include "dwt.h"
 
 static uint8_t idx = 0;
 //模块'motor'的私有变量,用于保存电机实例的地址
@@ -14,11 +16,10 @@ Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config)
     Motor_Instance_s *instance = (Motor_Instance_s *)malloc(sizeof(Motor_Instance_s));
     memset(instance, 0, sizeof(Motor_Instance_s));
 
-    instance->controller.angle_pid = config->controller.angle_pid;
+    instance->controller = config->controller;
     instance->setting = config->setting;
-    instance->pwm_config = config->pwm_config;
-    HAL_TIM_PWM_Start(instance->pwm_config.htim, instance->pwm_config.channel1);
-    HAL_TIM_PWM_Start(instance->pwm_config.htim, instance->pwm_config.channel2);
+    HAL_TIM_PWM_Start(instance->setting.pwm_config.htim, instance->setting.pwm_config.channel1);
+    HAL_TIM_PWM_Start(instance->setting.pwm_config.htim, instance->setting.pwm_config.channel2);
 
     motor_instance[idx++] = instance;
     return instance;
@@ -46,6 +47,36 @@ void MotorDrive(int16_t value, Motor_PWM_Config_s *pwm_config)
 }
 
 
+static void MotorMeasure(Motor_Instance_s *motor)
+{
+    static float dt;
+    static uint32_t cnt;
+    static float delta_angle;
+    static float speed;
+
+    motor->measures.angle = AS5600_GetAngle(motor->setting.hi2c);
+    delta_angle = motor->measures.angle - motor->measures.angle_last;
+    motor->measures.angle_last = motor->measures.angle;
+
+    //处理角度跳变
+    if (delta_angle > 180) {
+        delta_angle -= 360;
+    }else if(
+        delta_angle < -180) {
+        delta_angle += 360;
+    }
+
+    dt = DWT_GetDeltaT_s(&cnt);
+    speed = delta_angle / dt;
+
+    if (speed >10000){//目前存在个别异常数据,尚未清楚原因,在这做个简单检测
+        return;
+    }else{
+        motor->measures.speed = speed;
+    }
+   
+}
+
 /**
  * @brief 由于用两个PWM控制一个电机,所以这里的速度是-100~100,根据正负号改变PWM信号使能,从而改变方向
  * @brief 目前只有角度单环控制,后面考虑加速度环
@@ -54,42 +85,44 @@ void MotorDrive(int16_t value, Motor_PWM_Config_s *pwm_config)
 void MotorControl()
 {
     Motor_Instance_s *motor;
-    Motor_PWM_Config_s *pwm_config;
     Motor_Setting_s *setting;
     Motor_Controller_s *controller;
-    Motor_Measures_s *measures;
     float pid_ref;
-    float measure;
+    float pid_measure;
 
     for(int i = 0; i < MOTOR_COUNT; i++)
     {
         if(motor_instance[i] == NULL) break;
-        
+
+        MotorMeasure(motor_instance[i]);//测量电机数据
+
         motor = motor_instance[i];
         setting = &motor->setting;
         controller = &motor->controller;
-        measures = &motor->measures;
-        pwm_config = &motor->pwm_config;
-        pid_ref = controller->ref;
+        pid_ref = controller->pid_ref;
 
         //角度环计算
-        if (controller->loop_type == OPEN_LOOP) {
+        if (controller->loop_type & ANGLE_LOOP) {
+            pid_measure = motor->measures.angle;
+            pid_ref = PIDCalculate(&controller->angle_pid, pid_measure, pid_ref);
         }
-        else if (controller->loop_type == CLOSE_LOOP) {
-            measure = measures->angle;
-            pid_ref = PIDCalculate(&controller->angle_pid, measure, pid_ref);
+        
+        if (controller->loop_type & SPEED_LOOP) {
+            pid_measure = motor->measures.speed;
+            pid_ref = PIDCalculate(&controller->speed_pid, pid_measure, pid_ref);
         }
 
         if (setting->reverse == MOTOR_DIR_REVERSE) {
             pid_ref *= -1;
         }
 
-        MotorDrive((int16_t)pid_ref, pwm_config);
+        MotorDrive((int16_t)pid_ref, &setting->pwm_config);
 
     }
 }
 
+
 void MotorSetRef(Motor_Instance_s *motor, float ref)
 {
-    motor->controller.ref = ref;
+    motor->controller.pid_ref = ref;
 }

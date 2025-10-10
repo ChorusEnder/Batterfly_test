@@ -4,6 +4,7 @@
 #include "FreeRTOS.h"
 #include "butterfly.h"
 #include "motor.h"
+#include "dwt.h"
 
 osThreadId motorTaskHandle;
 const osThreadAttr_t motorTask_attributes = {
@@ -36,6 +37,7 @@ void motorTASK(void *argument)
     {
         MotorControl();
         osDelay(10);
+
     }
 }
 
@@ -46,6 +48,6 @@ void butterflyTASK(void *argument)
     for(;;)
     {
         Butterfly_Task();
-        osDelay(100);
+        osDelay(10);
     }
 }

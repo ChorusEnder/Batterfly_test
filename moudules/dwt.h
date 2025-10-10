@@ -45,7 +45,7 @@ float DWT_GetDeltaT_s(uint32_t *cnt_last);
  * @param cnt_last 传入一个uin32_t类型的变量地址即可
  * @return 时间差,单位秒
  */
-float DWT_GetDeltaT64_s(uint32_t *cnt_last);
+double DWT_GetDeltaT64_s(uint32_t *cnt_last);
 
 
 #endif

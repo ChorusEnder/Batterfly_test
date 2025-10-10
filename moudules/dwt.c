@@ -56,7 +56,7 @@ float DWT_GetDeltaT_s(uint32_t *cnt_last)
     return dt;
 }
 
-float DWT_GetDeltaT64_s(uint32_t *cnt_last)
+double DWT_GetDeltaT64_s(uint32_t *cnt_last)
 {
     
     volatile uint32_t cnt_now = DWT->CYCCNT;

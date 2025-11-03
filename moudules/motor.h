@@ -3,12 +3,13 @@
 
 #include "main.h"
 #include "pid.h"
+#include <stdlib.h>
+#include <string.h>
 
 //比较寄存器的值,根据实际设置更改
 #define VALUE_COMPARE 100 -1
 #define MOTOR_COUNT 4
 
-extern TIM_HandleTypeDef htim3;
 
 typedef enum {
     MOTOR_DIR_NORMAL = 0,

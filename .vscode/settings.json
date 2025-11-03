@@ -7,6 +7,9 @@
         "pid.h": "c",
         "cmsis_os.h": "c",
         "butterfly.h": "c",
-        "dwt.h": "c"
+        "dwt.h": "c",
+        "usart.h": "c",
+        "dma.h": "c",
+        "butterfly_task.h": "c"
     }
 }

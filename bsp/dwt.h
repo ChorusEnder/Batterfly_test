@@ -3,6 +3,7 @@
 
 #include "main.h"
 
+// 时间结构体,分为秒,毫秒,微秒
 typedef struct {
     uint32_t s;
     uint32_t ms;

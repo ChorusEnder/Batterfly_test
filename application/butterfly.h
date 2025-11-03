@@ -1,7 +1,6 @@
 # pragma once
 
-#include "motor.h"
-#include "as5600.h"
+#include "main.h"
 
 void Butterfly_Init();
 void Butterfly_Task();

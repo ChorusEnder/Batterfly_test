@@ -1,7 +1,7 @@
 #include "dwt.h"
 
-DWT_Time_s DWT_Time;
-static uint32_t CPU_Freq_Hz, CPU_Freq_us, CPU_Freq_ms;
+static DWT_Time_s DWT_Time;//时间轴结构体实例
+static uint32_t CPU_Freq_Hz, CPU_Freq_us, CPU_Freq_ms;//除数,将周期数转换为对应的的时间
 static uint32_t CYCCNT_RoundCount;//记录周期计数器圈数
 static uint32_t CYCCNT_Last;//上次读取的周期计数器值
 static uint64_t CYCCNT64;//周期计数器总计数
@@ -16,7 +16,7 @@ static void DWT_CNT_Update(void)
 
     if (!locker){
         locker = 1;//上锁
-        uint32_t CYCCNT_Now = DWT->CYCCNT;//读取周期寄存器的值
+        volatile uint32_t CYCCNT_Now = DWT->CYCCNT;//读取周期寄存器的值
         if (CYCCNT_Now < CYCCNT_Last) {
             CYCCNT_RoundCount++;
         }
@@ -37,8 +37,8 @@ void DWT_Init(uint32_t CPU_MHz)
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     CPU_Freq_Hz = CPU_MHz * 1000000;
-    CPU_Freq_ms = CPU_Freq_Hz / 1000;
-    CPU_Freq_us = CPU_Freq_Hz / 1000000;
+    CPU_Freq_ms = CPU_MHz * 1000;
+    CPU_Freq_us = CPU_MHz;
     CYCCNT_RoundCount = 0;
 
     DWT_CNT_Update();
@@ -68,8 +68,12 @@ double DWT_GetDeltaT64_s(uint32_t *cnt_last)
     return dt;
 }
 
-void DWT_SysTime_Update(void)
+/**
+ * @brief 私有函数,更新时间结构体DWT_Time的值
+ */
+static void DWT_SysTime_Update(void)
 {
+    //volatile修饰防止优化,使其每次访问都要真的去读或写内存地址
     volatile uint32_t cnt_now = DWT->CYCCNT;
     static uint64_t CNT_Temp1, CNT_Temp2, CNT_Temp3;//临时变量,用于计算各时间轴
 

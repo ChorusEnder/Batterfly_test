@@ -1,4 +1,9 @@
 
 build
 mingw32-make
+image
 
+*.jdebug
+*.user
+
+question.md

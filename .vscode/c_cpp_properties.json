@@ -3,7 +3,8 @@
         {
             "name": "stm32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3"
             ],
             "defines": [
                 "_DEBUG",

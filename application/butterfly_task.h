@@ -6,6 +6,7 @@
 #include "motor.h"
 #include "dwt.h"
 
+
 osThreadId motorTaskHandle;
 const osThreadAttr_t motorTask_attributes = {
   .name = "motorTask",
@@ -35,7 +36,8 @@ void motorTASK(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        MotorControl();
+        //频率过快似乎会导致iic通信失败
+        MotorControl();//任务运行时间约0.5ms
         osDelay(10);
 
     }

@@ -10,6 +10,11 @@
         "dwt.h": "c",
         "usart.h": "c",
         "dma.h": "c",
-        "butterfly_task.h": "c"
+        "butterfly_task.h": "c",
+        "tim.h": "c",
+        "freertos.h": "c",
+        "portable.h": "c",
+        "as5600.h": "c",
+        "task.h": "c"
     }
 }

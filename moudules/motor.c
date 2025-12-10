@@ -7,7 +7,6 @@ static uint8_t idx = 0;
 //模块'motor'的私有变量,用于保存电机实例的地址
 static Motor_Instance_s *motor_instance[MOTOR_COUNT] = {0};
 
-static float value;
 
 /**
  * @brief 电机初始化函数
@@ -49,34 +48,43 @@ void MotorDrive(int16_t value, Motor_PWM_Config_s *pwm_config)
 }
 
 
-static void MotorMeasure(Motor_Instance_s *motor)
+void MotorMeasure()
 {
-    static uint32_t last_cnt;
+    Motor_Instance_s *motor;
+
     static uint8_t flag;
-    float dt;
     float delta_angle;
     float speed;
 
-    motor->measures.angle = TMAG5273_GetAngle(motor->setting.hi2c);
-    delta_angle = motor->measures.angle - motor->measures.angle_last;
-    motor->measures.angle_last = motor->measures.angle;
+    for(int i = 0; i < MOTOR_COUNT; i++)
+    {
+        if (motor_instance[i] == NULL) break;
 
-    //处理角度跳变
-    if (delta_angle > 180) {
-        delta_angle -= 360;
-    }else if(
-        delta_angle < -180) {
-        delta_angle += 360;
-    }
+        motor = motor_instance[i];
+        
+        //角度获取
+        motor->measures.angle = TMAG5273_GetAngle(motor->setting.hi2c);
 
-    dt = DWT_GetDeltaT_s(&last_cnt);
-    speed = delta_angle / dt;
-    motor->measures.speed = speed;
+        //速度计算
+        delta_angle = motor->measures.angle - motor->measures.angle_last;
+        motor->measures.angle_last = motor->measures.angle;
+        //处理角度跳变
+        if (delta_angle > 180) {
+            delta_angle -= 360;
+        }else if(
+            delta_angle < -180) {
+            delta_angle += 360;
+        }
 
-    //防止第一次测量时速度异常大
-    if(flag == 0) {
-        motor->measures.speed = 0;
-        flag = 1;
+        motor->measures.dt = DWT_GetDeltaT_s(&motor->measures.last_cnt);
+        speed = delta_angle / motor->measures.dt;
+        motor->measures.speed = speed;
+
+        //防止第一次测量时速度异常大
+        if(flag == 0) {
+            motor->measures.speed = 0;
+            flag = 1;
+        }
     }
 }
 
@@ -97,7 +105,7 @@ void MotorControl()
     {
         if(motor_instance[i] == NULL) break;
 
-        MotorMeasure(motor_instance[i]);//测量电机数据
+        // MotorMeasure(motor_instance[i]);//测量电机数据
 
         motor = motor_instance[i];
         setting = &motor->setting;
@@ -119,11 +127,18 @@ void MotorControl()
             pid_ref *= -1;
         }
 
+        //前馈
+        if(pid_ref > 0){
+            pid_ref += controller->feedward;
+        }else if(pid_ref < 0){
+            pid_ref -= controller->feedward;
+        }
+
+
         if (motor->setting.motor_state == MOTOR_STOP) {
             pid_ref = 0; 
         }
 
-        value = (int16_t)pid_ref;
         motor->controller.set = pid_ref;
         MotorDrive((int16_t)motor->controller.set, &setting->pwm_config);
 

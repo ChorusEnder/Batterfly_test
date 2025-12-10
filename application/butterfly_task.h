@@ -21,13 +21,22 @@ const osThreadAttr_t butterflyTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+osThreadId angleTaskHandle;
+const osThreadAttr_t angleTask_attributes = {
+  .name = "angleTask",
+  .stack_size = 128 * 2,
+  .priority = (osPriority_t) osPriorityNormal1,
+};
+
 void motorTASK(void *argument);
 void butterflyTASK(void *argument);
+void angleTASK(void *argument);
 
 void OSTask_Init(void)
 {
     motorTaskHandle = osThreadNew(motorTASK, NULL, &motorTask_attributes);
     butterflyTaskHandle = osThreadNew(butterflyTASK, NULL, &butterflyTask_attributes);
+    angleTaskHandle = osThreadNew(angleTASK, NULL, &angleTask_attributes);
 }
 
 void motorTASK(void *argument)
@@ -38,7 +47,7 @@ void motorTASK(void *argument)
     {
         //频率过快似乎会导致iic通信失败
         MotorControl();//任务运行时间约0.5ms
-        osDelay(10);
+        osDelay(5);
 
     }
 }
@@ -51,5 +60,16 @@ void butterflyTASK(void *argument)
     {
         Butterfly_Task();
         osDelay(10);
+    }
+}
+
+void angleTASK(void *argument)
+{
+
+    /* Infinite loop */
+    for(;;)
+    {
+        MotorMeasure();
+        osDelay(2);
     }
 }

@@ -41,6 +41,9 @@ typedef struct {
     float angle;
     float speed;
     float angle_last;
+
+    float dt;
+    uint32_t last_cnt; 
 } Motor_Measures_s;
 
 //电机控制器
@@ -50,6 +53,7 @@ typedef struct {
     Loop_Type_e loop_type;
     PID_Instance_s angle_pid;
     PID_Instance_s speed_pid;
+    float feedward;
 
 } Motor_Controller_s;
 
@@ -76,6 +80,7 @@ typedef struct {
 
 Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config);
 void MotorControl();
+void MotorMeasure();
 
 void MotorSetRef(Motor_Instance_s *motor, float ref);
 void MotorEnable(Motor_Instance_s *motor);

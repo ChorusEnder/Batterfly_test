@@ -6,24 +6,29 @@
 #include "motor.h"
 #include "as5600.h"
 #include "arm_math.h"
+#include "remote_fs.h"
 
 static Motor_Instance_s* motor1;
-static Ibus_Data_Fs_i6x *rc_fs_i6x;
-// static float angle_l;
-// static float angle_r;
+static RC_Fs_Ctrl_s *rc_fs_i6x;
+
+/*-------------------以下是Asin(wt)+B有关的参数---------*/
+static float angle_l;
+static float angle_r;
 static float time;
-
 static float ref = 100;
+static float A1 = 100;
+static float w1 = 20;
+/*----------------------------------------------------*/
 
+/*---------iic读取寄存器的相关变量-----------*/
 static uint16_t reg_add_r = 0x19;
 static uint8_t data_r[2];
 static uint16_t reg_add_w = 0x00;
 static uint8_t data_w = 0b00001000;
+/*----------------------------------------*/
 
 static float dt;
 static uint32_t last_t;
-
-
 
 void Butterfly_Init()
 {
@@ -33,13 +38,14 @@ void Butterfly_Init()
     Motor_Init_Config_s motorConfig = {
         .controller = {
             // .loop_type = ANGLE_LOOP | SPEED_LOOP,
-            .loop_type = OPEN_LOOP,
+            .loop_type = ANGLE_LOOP,
             .pid_ref = 0.0f,
+            .feedward  = 20.0f,
             .angle_pid = {
-                .kp = 0.5f,
+                .kp = 1.0f,
                 .ki = 0.1f,
                 .kd = 0.0f,
-                .deadband = 0.5,
+                .deadband = 1.0f,
                 .maxout = VALUE_COMPARE,
                 .Improve = PID_T_Intergral | PID_I_limit | PID_D_Filter | PID_OutputFilter | PID_Changing_I,
                 .core_a = 100,
@@ -75,29 +81,37 @@ void Butterfly_Init()
         }
     };
     motor1 = Motor_Init(&motorConfig);
-    rc_fs_i6x = Ibus_Init(&huart1);
+    rc_fs_i6x = Remote_Fs_Init(&huart1);
 
     TMAG5273_Init(&hi2c2);
+
+
 }
 
 void RemoteControl()
 {
-    if (sw_is_up(rc_fs_i6x->switch_l1 && sw_is_up(rc_fs_i6x->switch_l2))){
 
+
+
+    if (fs_switch_is_down(rc_fs_i6x->swd)){
+        motor1->setting.motor_state = MOTOR_STOP;
     }
-
+    else if (fs_switch_is_up(rc_fs_i6x->swd)){
+        motor1->setting.motor_state = MOTOR_ENABLE;
+    }
 }
 
 
 void Butterfly_Task()
 {
     time = DWT_GetTimeLine_s();
-
     dt = DWT_GetDeltaT_s(&last_t);
 
-    // ref = 200*arm_sin_f32(20*time);
-    // MotorSetRef(motor1, ref);
+    ref = 100*arm_sin_f32(20*time) + 150;
+    MotorSetRef(motor1, ref);
 
     TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
     TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
+
+    RemoteControl();
 }

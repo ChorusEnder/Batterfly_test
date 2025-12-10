@@ -8,9 +8,6 @@ typedef enum {
     BUTTERFLY_MODE_STOP//急停模式
 } butterfly_mode_e;
 
-// typedef struct {
-
-// };
 
 void Butterfly_Init();
 void Butterfly_Task();

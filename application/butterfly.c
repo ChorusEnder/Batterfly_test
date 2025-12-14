@@ -96,6 +96,7 @@ void Butterfly_Init()
     rc_fs_i6x = Ibus_Init(&huart2);
 
     
+    
 
 
 }

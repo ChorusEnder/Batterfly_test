@@ -22,6 +22,8 @@ Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config)
     HAL_TIM_PWM_Start(instance->setting.pwm_config.htim, instance->setting.pwm_config.channel1);
     HAL_TIM_PWM_Start(instance->setting.pwm_config.htim, instance->setting.pwm_config.channel2);
 
+    TMAG5273_Init(config->setting.hi2c);
+
     motor_instance[idx++] = instance;
     return instance;
 }

@@ -70,11 +70,11 @@ void Butterfly_Init()
             }
         },
         .setting = {
-            .hi2c = &hi2c2,
+            .hi2c = &hi2c1,
             .pwm_config = {
                 .htim = &htim3,
-                .channel1 = TIM_CHANNEL_3,
-                .channel2 = TIM_CHANNEL_4,
+                .channel1 = TIM_CHANNEL_1,
+                .channel2 = TIM_CHANNEL_2,
             },
             .reverse = MOTOR_DIR_NORMAL,
             .motor_state = MOTOR_ENABLE,
@@ -83,7 +83,7 @@ void Butterfly_Init()
     motor1 = Motor_Init(&motorConfig);
     // rc_fs_i6x = Remote_Fs_Init(&huart1);
 
-    TMAG5273_Init(&hi2c2);
+    
 
 
 }

@@ -81,7 +81,7 @@ void Butterfly_Init()
         }
     };
     motor1 = Motor_Init(&motorConfig);
-    rc_fs_i6x = Remote_Fs_Init(&huart1);
+    // rc_fs_i6x = Remote_Fs_Init(&huart1);
 
     TMAG5273_Init(&hi2c2);
 
@@ -108,10 +108,10 @@ void Butterfly_Task()
     dt = DWT_GetDeltaT_s(&last_t);
 
     ref = 100*arm_sin_f32(20*time) + 150;
-    MotorSetRef(motor1, ref);
+    // MotorSetRef(motor1, ref);
 
-    TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
-    TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
+    // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
+    // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
 
     RemoteControl();
 }

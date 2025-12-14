@@ -107,7 +107,7 @@ void Butterfly_Task()
     time = DWT_GetTimeLine_s();
     dt = DWT_GetDeltaT_s(&last_t);
 
-    ref = 100*arm_sin_f32(20*time) + 150;
+    // ref = 100*arm_sin_f32(20*time) + 150;
     // MotorSetRef(motor1, ref);
 
     // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);

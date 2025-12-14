@@ -39,4 +39,7 @@ typedef struct
  */
 RC_Fs_Ctrl_s* Remote_Fs_Init(UART_HandleTypeDef *usart_handle);
 
+
+
+
 #endif

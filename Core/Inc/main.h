@@ -62,14 +62,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define PC13_Pin GPIO_PIN_13
 #define PC13_GPIO_Port GPIOC
-#define M_L1_Pin GPIO_PIN_6
-#define M_L1_GPIO_Port GPIOA
-#define M_L2_Pin GPIO_PIN_7
-#define M_L2_GPIO_Port GPIOA
-#define M_R1_Pin GPIO_PIN_0
-#define M_R1_GPIO_Port GPIOB
-#define M_R2_Pin GPIO_PIN_1
-#define M_R2_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

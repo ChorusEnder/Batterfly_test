@@ -4,13 +4,13 @@
 #define IBUS_HEADER 0x20 // IBUS数据包头
 #define IBUS_DATA_LEN 32 // 32字节数据包
 
-static Ibus_Data_Fs_i6x Fs_data;//模块'ibus'的私有变量,用于保存接收的数据
+static RC_Fs_Ctrl_s Fs_data;//模块'ibus'的私有变量,用于保存接收的数据
 static UART_Instance *ibus_uart;//模块'ibus'的私有变量,用于保存UART实例的地址
 
 static uint16_t IBUS_Checksum(uint8_t *buf);
 static void Ibus_Decode_Fs_i6x();
 
-Ibus_Data_Fs_i6x *Ibus_Init(UART_HandleTypeDef *huart)
+RC_Fs_Ctrl_s *Ibus_Init(UART_HandleTypeDef *huart)
 {
     UART_Init_Config config;
     config.rx_buffer_size = IBUS_DATA_LEN;
@@ -48,12 +48,12 @@ static void Ibus_Decode_Fs_i6x()
     Fs_data.rocker_r1 = Fs_data.channel[1];
     Fs_data.rocker_l1 = Fs_data.channel[2];
     Fs_data.rocker_l_ = Fs_data.channel[3];
-    Fs_data.dial_l = Fs_data.channel[4];
-    Fs_data.dial_r = Fs_data.channel[5];
-    Fs_data.switch_r1 = Fs_data.channel[6]  / RC_SW_DIV;
-    Fs_data.switch_r2 = Fs_data.channel[7]  / RC_SW_DIV;
-    Fs_data.switch_l1 = Fs_data.channel[8]  / RC_SW_DIV;
-    Fs_data.switch_l2 = Fs_data.channel[9]  / RC_SW_DIV;
+    Fs_data.swa = Fs_data.channel[4] / RC_SW_DIV;
+    Fs_data.swb = Fs_data.channel[5] / RC_SW_DIV;
+    Fs_data.swc = Fs_data.channel[6] / RC_SW_DIV;
+    Fs_data.swd = Fs_data.channel[7] / RC_SW_DIV;
+    Fs_data.vra = Fs_data.channel[8];
+    Fs_data.vrb = Fs_data.channel[9];
 
 }
 

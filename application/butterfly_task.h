@@ -46,7 +46,7 @@ void motorTASK(void *argument)
     for(;;)
     {
         //频率过快似乎会导致iic通信失败
-        MotorControl();//任务运行时间约0.5ms
+        MotorTask();//任务运行时间约0.5ms
         osDelay(5);
 
     }

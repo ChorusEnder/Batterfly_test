@@ -40,7 +40,7 @@ void Butterfly_Init()
     Motor_Init_Config_s motorConfig = {
         .controller = {
             // .loop_type = ANGLE_LOOP | SPEED_LOOP,
-            .loop_type = ANGLE_LOOP,
+            .loop_type = OPEN_LOOP,
             .pid_ref = 0.0f,
             .feedward  = 20.0f,
             .angle_pid = {
@@ -113,14 +113,17 @@ void RemoteControl()
     
 }
 
+void MotorControl()
+{
+
+}
+
 
 void Butterfly_Task()
 {
     time = DWT_GetTimeLine_s();
     dt = DWT_GetDeltaT_s(&last_t);
 
-    // ref = 100*arm_sin_f32(20*time) + 150;
-    // MotorSetRef(motor1, ref);
     // ref = 100*arm_sin_f32(20*time) + 150;
     // MotorSetRef(motor1, ref);
 
@@ -130,4 +133,5 @@ void Butterfly_Task()
     // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
 
     RemoteControl();
+    MotorControl();
 }

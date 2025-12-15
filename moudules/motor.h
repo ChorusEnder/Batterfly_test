@@ -79,7 +79,7 @@ typedef struct {
 
 
 Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config);
-void MotorControl();
+void MotorTask();
 void MotorMeasure();
 
 void MotorSetRef(Motor_Instance_s *motor, float ref);

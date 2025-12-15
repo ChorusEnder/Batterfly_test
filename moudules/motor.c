@@ -95,7 +95,7 @@ void MotorMeasure()
  * @brief 目前只有角度单环控制,后面考虑加速度环
  * @param speed 范围-100~100
  */
-void MotorControl()
+void MotorTask()
 {
     Motor_Instance_s *motor;
     Motor_Setting_s *setting;

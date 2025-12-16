@@ -114,6 +114,10 @@ void MotorTask()
         controller = &motor->controller;
         pid_ref = controller->pid_ref;
 
+        if (setting->flag_feedback_reverse == FEEDBACK_DIR_REVERSE) {
+            pid_ref *= -1;
+        }
+
         //角度环计算
         if (controller->loop_type & ANGLE_LOOP) {
             pid_measure = motor->measures.angle;
@@ -125,7 +129,7 @@ void MotorTask()
             pid_ref = PIDCalculate(&controller->speed_pid, pid_measure, pid_ref);
         }
 
-        if (setting->reverse == MOTOR_DIR_REVERSE) {
+        if (setting->flag_motor_reverse == MOTOR_DIR_REVERSE) {
             pid_ref *= -1;
         }
 

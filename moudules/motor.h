@@ -17,6 +17,11 @@ typedef enum {
 } Motor_Reverse_Flag_e;
 
 typedef enum {
+    FEEDBACK_DIR_NORMAL = 0,
+    FEEDBACK_DIR_REVERSE = 1,
+} Motor_Feedback_Reverse_Flag_e;
+
+typedef enum {
     MOTOR_STOP = 0,
     MOTOR_ENABLE,
 } Motor_State_e;
@@ -61,7 +66,8 @@ typedef struct {
 typedef struct {
     I2C_HandleTypeDef *hi2c;//iic句柄指针
     Motor_PWM_Config_s pwm_config;
-    Motor_Reverse_Flag_e reverse; // 反转标志
+    Motor_Reverse_Flag_e flag_motor_reverse; // 反转标志
+    Motor_Feedback_Reverse_Flag_e flag_feedback_reverse; // 反馈反转标志
     Motor_State_e motor_state;
 } Motor_Setting_s;
 

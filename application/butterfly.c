@@ -8,8 +8,9 @@
 #include "arm_math.h"
 #include "remote_fs.h"
 
-static Motor_Instance_s* motor1;
-static Motor_Instance_s* motor2;
+
+static Motor_Instance_s* motor_l;
+static Motor_Instance_s* motor_r;
 static RC_Fs_Ctrl_s *rc_fs_i6x;
 
 
@@ -42,7 +43,7 @@ void Butterfly_Init()
             // .loop_type = ANGLE_LOOP | SPEED_LOOP,
             .loop_type = OPEN_LOOP,
             .pid_ref = 0.0f,
-            .feedward  = 20.0f,
+            .feedward  = 0.0f,
             .angle_pid = {
                 .kp = 1.0f,
                 .ki = 0.1f,
@@ -78,25 +79,24 @@ void Butterfly_Init()
                 .channel1 = TIM_CHANNEL_1,
                 .channel2 = TIM_CHANNEL_2,
             },
-            .reverse = MOTOR_DIR_NORMAL,
+            .flag_motor_reverse = MOTOR_DIR_NORMAL,
+            .flag_feedback_reverse = FEEDBACK_DIR_NORMAL,
             .motor_state = MOTOR_ENABLE,
         }
     };
-    motor1 = Motor_Init(&motorConfig);
+    motor_l = Motor_Init(&motorConfig);
 
     motorConfig.setting.hi2c = &hi2c1;
     motorConfig.setting.pwm_config.htim = &htim1;
     motorConfig.setting.pwm_config.channel1 = TIM_CHANNEL_3;
     motorConfig.setting.pwm_config.channel2 = TIM_CHANNEL_4;
-    motorConfig.setting.reverse = MOTOR_DIR_NORMAL;
-    motor2 = Motor_Init(&motorConfig);//正面
+    motorConfig.setting.flag_motor_reverse = MOTOR_DIR_NORMAL;
+    motorConfig.setting.flag_feedback_reverse = FEEDBACK_DIR_NORMAL;
+    motor_r = Motor_Init(&motorConfig);//正面
 
 
     // rc_fs_i6x = Remote_Fs_Init(&huart1);
     rc_fs_i6x = Ibus_Init(&huart2);
-
-    
-    
 
 
 }
@@ -105,18 +105,27 @@ void RemoteControl()
 {
 
     if (fs_switch_is_down(rc_fs_i6x->swd)){
-        motor1->setting.motor_state = MOTOR_STOP;
+        MotorStop(motor_l);
+        MotorStop(motor_r);
     }
     else if (fs_switch_is_up(rc_fs_i6x->swd)){
-        motor1->setting.motor_state = MOTOR_ENABLE;
+        MotorEnable(motor_l);
+        MotorEnable(motor_r);
     }
+
+    if (fs_switch_is_up(rc_fs_i6x->swa) && fs_switch_is_up(rc_fs_i6x->swb)){
+        angle_l = (500 + rc_fs_i6x->rocker_l1) / 1000.0f * VALUE_COMPARE;
+        angle_r = angle_l;
+    }
+    else if(fs_switch_is_up(rc_fs_i6x->swa) && fs_switch_is_mid(rc_fs_i6x->swb)){
+        angle_l += 0.01f * (rc_fs_i6x->rocker_l1);
+        angle_r += 0.01f * (rc_fs_i6x->rocker_l1);
+    }
+
+
     
 }
 
-void MotorControl()
-{
-
-}
 
 
 void Butterfly_Task()
@@ -124,11 +133,22 @@ void Butterfly_Task()
     time = DWT_GetTimeLine_s();
     dt = DWT_GetDeltaT_s(&last_t);
 
-    // ref = 100*arm_sin_f32(20*time) + 150;
-    // MotorSetRef(motor1, ref);
+    RemoteControl();
+    MotorControl();
 
-    // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
-    // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
+    
+    if (angle_l < 0)
+        angle_l = 0;
+    if (angle_l > 999)
+        angle_l = 999;
+    if (angle_r < 0)
+        angle_r = 0;
+    if (angle_r > 999)
+        angle_r = 999;
+
+    MotorSetRef(motor_l, angle_l);
+    MotorSetRef(motor_r, angle_r);
+
     // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
     // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
 

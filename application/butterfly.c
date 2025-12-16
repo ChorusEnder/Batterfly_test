@@ -181,9 +181,6 @@ void Butterfly_Task()
     RemoteControl();
     MotorControl();
 
-    
-    
-
     MotorSetRef(motor_l, angle_l);
     MotorSetRef(motor_r, angle_r);
 

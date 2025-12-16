@@ -49,6 +49,19 @@ void MotorDrive(int16_t value, Motor_PWM_Config_s *pwm_config)
     }
 }
 
+//将角度映射到[-180,0,180]区间内
+float Deal_Angle(float raw_angle, float offset)
+{
+    float angle;
+    angle = raw_angle - offset;
+    if (angle > 180){
+        angle -= 360;
+    }
+    if (angle < -180){
+        angle += 360;
+    }
+    return angle;
+}
 
 void MotorMeasure()
 {
@@ -65,28 +78,32 @@ void MotorMeasure()
         motor = motor_instance[i];
         
         //角度获取
-        motor->measures.angle = TMAG5273_GetAngle(motor->setting.hi2c);
-
-        //速度计算
-        delta_angle = motor->measures.angle - motor->measures.angle_last;
-        motor->measures.angle_last = motor->measures.angle;
-        //处理角度跳变
-        if (delta_angle > 180) {
-            delta_angle -= 360;
-        }else if(
-            delta_angle < -180) {
-            delta_angle += 360;
+        float raw_angle = TMAG5273_GetAngle(motor->setting.hi2c);
+        motor->measures.angle = Deal_Angle(raw_angle, motor->setting.motor_offset);
+        if (motor->setting.flag_feedback_reverse == FEEDBACK_DIR_REVERSE) {
+            motor->measures.angle *= -1;
         }
 
-        motor->measures.dt = DWT_GetDeltaT_s(&motor->measures.last_cnt);
-        speed = delta_angle / motor->measures.dt;
-        motor->measures.speed = speed;
+        // //速度计算
+        // delta_angle = motor->measures.angle - motor->measures.angle_last;
+        // motor->measures.angle_last = motor->measures.angle;
+        // //处理角度跳变
+        // if (delta_angle > 180) {
+        //     delta_angle -= 360;
+        // }else if(
+        //     delta_angle < -180) {
+        //     delta_angle += 360;
+        // }
 
-        //防止第一次测量时速度异常大
-        if(flag == 0) {
-            motor->measures.speed = 0;
-            flag = 1;
-        }
+        // motor->measures.dt = DWT_GetDeltaT_s(&motor->measures.last_cnt);
+        // speed = delta_angle / motor->measures.dt;
+        // motor->measures.speed = speed;
+
+        // //防止第一次测量时速度异常大
+        // if(flag == 0) {
+        //     motor->measures.speed = 0;
+        //     flag = 1;
+        // }
     }
 }
 
@@ -114,9 +131,6 @@ void MotorTask()
         controller = &motor->controller;
         pid_ref = controller->pid_ref;
 
-        if (setting->flag_feedback_reverse == FEEDBACK_DIR_REVERSE) {
-            pid_ref *= -1;
-        }
 
         //角度环计算
         if (controller->loop_type & ANGLE_LOOP) {

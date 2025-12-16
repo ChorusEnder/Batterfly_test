@@ -69,6 +69,7 @@ typedef struct {
     Motor_Reverse_Flag_e flag_motor_reverse; // 反转标志
     Motor_Feedback_Reverse_Flag_e flag_feedback_reverse; // 反馈反转标志
     Motor_State_e motor_state;
+    float motor_offset;
 } Motor_Setting_s;
 
 

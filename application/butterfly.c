@@ -8,19 +8,22 @@
 #include "arm_math.h"
 #include "remote_fs.h"
 
-
+static butterfly_mode_e butterfly_mode;
 static Motor_Instance_s* motor_l;
 static Motor_Instance_s* motor_r;
-static RC_Fs_Ctrl_s *rc_fs_i6x;
+static RC_Fs_Ctrl_s *rc_fs;
 
 
 /*-------------------以下是Asin(wt)+B有关的参数---------*/
 static float angle_l;
 static float angle_r;
 static float time;
-static float ref = 100;
-static float A1 = 100;
-static float w1 = 20;
+static float w = 20;
+
+static float Al = 100;
+static float bl;
+static float Ar = 100;
+static float br;
 /*----------------------------------------------------*/
 
 /*---------iic读取寄存器的相关变量-----------*/
@@ -41,7 +44,7 @@ void Butterfly_Init()
     Motor_Init_Config_s motorConfig = {
         .controller = {
             // .loop_type = ANGLE_LOOP | SPEED_LOOP,
-            .loop_type = OPEN_LOOP,
+            .loop_type = ANGLE_LOOP,
             .pid_ref = 0.0f,
             .feedward  = 0.0f,
             .angle_pid = {
@@ -96,36 +99,78 @@ void Butterfly_Init()
 
 
     // rc_fs_i6x = Remote_Fs_Init(&huart1);
-    rc_fs_i6x = Ibus_Init(&huart2);
+    rc_fs = Ibus_Init(&huart2);
 
 
 }
 
-void RemoteControl()
+static void Control_Rise_Fall()
 {
 
-    if (fs_switch_is_down(rc_fs_i6x->swd)){
-        MotorStop(motor_l);
-        MotorStop(motor_r);
-    }
-    else if (fs_switch_is_up(rc_fs_i6x->swd)){
-        MotorEnable(motor_l);
-        MotorEnable(motor_r);
-    }
-
-    if (fs_switch_is_up(rc_fs_i6x->swa) && fs_switch_is_up(rc_fs_i6x->swb)){
-        angle_l = (500 + rc_fs_i6x->rocker_l1) / 1000.0f * VALUE_COMPARE;
-        angle_r = angle_l;
-    }
-    else if(fs_switch_is_up(rc_fs_i6x->swa) && fs_switch_is_mid(rc_fs_i6x->swb)){
-        angle_l += 0.01f * (rc_fs_i6x->rocker_l1);
-        angle_r += 0.01f * (rc_fs_i6x->rocker_l1);
-    }
-
-
-    
 }
 
+static void Control_Direction()
+{
+
+}
+
+static void RemoteControl()
+{
+    if (fs_switch_is_down(rc_fs->swd)){
+        butterfly_mode = BUTTERFLY_MODE_STOP;
+        return;
+    }
+
+    if (fs_switch_is_up(rc_fs->swa) && fs_switch_is_up(rc_fs->swb)){
+        butterfly_mode = BUTTERFLY_MODE_POSITION;
+
+        angle_l = (rc_fs->rocker_l1) / 1000.0f * 360.0f;
+        angle_r = (rc_fs->rocker_l1) / 1000.0f * 360.0f;
+
+        if (angle_l < -80) angle_l = 80;
+        if (angle_r < -80) angle_r = 80;
+        if (angle_l > 90) angle_l = 90;
+        if (angle_r > 90) angle_r = 90;
+
+    }
+    else if(fs_switch_is_up(rc_fs->swa) && fs_switch_is_mid(rc_fs->swb)){
+        butterfly_mode = BUTTERFLY_MODE_FLYING;
+
+        angle_l = Al * arm_sin_f32(w * time) + bl;
+        angle_r = Ar * arm_sin_f32(w * time) + br;
+    }
+}
+
+
+static void MotorControl()
+{
+    switch (butterfly_mode)
+    {
+        case BUTTERFLY_MODE_POSITION:
+            //定点模式,通过遥控器控制翅膀位置           
+            MotorEnable(motor_l);
+            MotorEnable(motor_r);
+
+            MotorSetRef(motor_l, angle_l);
+            MotorSetRef(motor_r, angle_r);
+            
+            break;
+        case BUTTERFLY_MODE_FLYING:
+            //飞行模式,通过遥控器控制翅膀速度,转向,升降...
+            MotorEnable(motor_l);
+            MotorEnable(motor_r);
+
+            MotorSetRef(motor_l, angle_l);
+            MotorSetRef(motor_r, angle_r);
+            
+            break;
+        case BUTTERFLY_MODE_STOP:
+            //急停模式
+            MotorStop(motor_l);
+            MotorStop(motor_r);
+            break;
+    }
+}
 
 
 void Butterfly_Task()
@@ -137,14 +182,7 @@ void Butterfly_Task()
     MotorControl();
 
     
-    if (angle_l < 0)
-        angle_l = 0;
-    if (angle_l > 999)
-        angle_l = 999;
-    if (angle_r < 0)
-        angle_r = 0;
-    if (angle_r > 999)
-        angle_r = 999;
+    
 
     MotorSetRef(motor_l, angle_l);
     MotorSetRef(motor_r, angle_r);
@@ -152,6 +190,4 @@ void Butterfly_Task()
     // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
     // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
 
-    RemoteControl();
-    MotorControl();
 }

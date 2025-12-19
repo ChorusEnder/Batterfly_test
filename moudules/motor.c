@@ -89,7 +89,6 @@ void MotorMeasure()
             }
         }
         
-        
 
         // //速度计算
         // delta_angle = motor->measures.angle - motor->measures.angle_last;
@@ -131,14 +130,10 @@ void MotorTask()
     {
         if(motor_instance[i] == NULL) break;
 
-        // MotorMeasure(motor_instance[i]);//测量电机数据
-
         motor = motor_instance[i];
         setting = &motor->setting;
         controller = &motor->controller;
         pid_ref = controller->pid_ref;
-
-        
 
         //角度环计算
         if (controller->loop_type & ANGLE_LOOP) {
@@ -151,26 +146,16 @@ void MotorTask()
             pid_ref = PIDCalculate(&controller->speed_pid, pid_measure, pid_ref);
         }
 
-    
-        //前馈
-        // if(pid_ref > 0){
-        //     pid_ref += controller->feedward;
-        // }else if(pid_ref < 0){
-        //     pid_ref -= controller->feedward;
-        // }
-
-        
-
-
-        if (motor->setting.motor_state == MOTOR_STOP) {
-            pid_ref = 0; 
-        }
-
         if (setting->flag_motor_reverse == MOTOR_DIR_REVERSE) {
             pid_ref *= -1;
         }
 
+        //前馈,须在反转判断之后
         pid_ref += setting->feedforward;
+
+        if (motor->setting.motor_state == MOTOR_STOP) {
+            pid_ref = 0; 
+        }
 
         motor->controller.set = pid_ref;
         MotorDrive((int16_t)motor->controller.set, &setting->pwm_config);

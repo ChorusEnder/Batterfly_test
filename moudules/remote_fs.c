@@ -3,46 +3,73 @@
 // #include "daemon.h"
 #include <stdlib.h>
 
+/**-------------I-bus define-------------- */
+#define IBUS_HEADER 0x20 // IBUS数据包头
+#define IBUS_DATA_LEN 32 // 32字节数据包
+#define IBUS_OFFSET 1500 //遥控器通道偏置
+#define IBUS_SW_DIV 500   //利用C语言中`/`的性质匹配开关状态
+/**---------------------------------------- */
+
+/**-------------Sbus define-------------- */
 #define RC_FS_RXBUFF_SIZE 25 // 遥控器接收的buffer大小
 #define SBUS_HEADER 0x0F
 #define SBUS_MID 1024
 #define SBUS_SW_DIV 500//直接`/`通道值得到开关状态
+/*-----------------------------------------------*/
 
 #define rocker_deadband(x) ((abs(x) < 10) ? 0 : x) // 摇杆死区处理,处理垃圾富斯遥感零偏
 
-static RC_Fs_Ctrl_s rc_ctrl[1]; // 遥控器数据
+static RC_Fs_Ctrl_s rc_data; // 遥控器数据
 static UART_Instance *rc_uart_instance;
 // static DaemonInstance *rc_daemon_instance;
 
-static void Channel_to_Ctrl_Fs()
+//函数原型
+static void Decode_Ibus();
+static void Decode_Sbus();
+static void Ch_to_Ctrl_Fs();
+
+//接收回调函数
+static void Remote_fs_RxCallback()
 {
-    int16_t *ch = rc_ctrl->channel;
+    // DaemonReload(rc_daemon_instance); // 先喂狗
 
-    //摇杆部分基本不用改
-    rc_ctrl->rocker_r_ = ch[0];
-    rc_ctrl->rocker_r1 = ch[1];
-    rc_ctrl->rocker_l1 = ch[2];
-    rc_ctrl->rocker_l_ = ch[3];
-    rc_ctrl->rocker_l1 = rocker_deadband(rc_ctrl->rocker_l1);
-    rc_ctrl->rocker_l_ = rocker_deadband(rc_ctrl->rocker_l_);
-    rc_ctrl->rocker_r1 = rocker_deadband(rc_ctrl->rocker_r1);
-    rc_ctrl->rocker_r_ = rocker_deadband(rc_ctrl->rocker_r_);
+    if (rc_data.type == RC_TYPE_SBUS)
+        Decode_Sbus();//协议解析
+    else if (rc_data.type == RC_TYPE_IBUS)
+        Decode_Ibus();//协议解析
 
-    //通道匹配遥控器设置
-    rc_ctrl->swa = ch[4] / SBUS_SW_DIV;
-    rc_ctrl->swb = ch[5] / SBUS_SW_DIV;
-    rc_ctrl->swc = ch[6] / SBUS_SW_DIV;
-    rc_ctrl->swd = ch[7] / SBUS_SW_DIV;
-
-    rc_ctrl->vra = ch[8];
-    rc_ctrl->vrb = ch[9];
+    Ch_to_Ctrl_Fs();//通道值映射到遥控器控的实际按键控制
 }
 
-static void Subs_Decode_Fs()
+static void Ch_to_Ctrl_Fs()
+{
+    int16_t *ch = rc_data.channel;
+
+    //摇杆部分基本不用改
+    rc_data.rocker_r_ = ch[0];
+    rc_data.rocker_r1 = ch[1];
+    rc_data.rocker_l1 = ch[2];
+    rc_data.rocker_l_ = ch[3];
+    rc_data.rocker_l1 = rocker_deadband(rc_data.rocker_l1);
+    rc_data.rocker_l_ = rocker_deadband(rc_data.rocker_l_);
+    rc_data.rocker_r1 = rocker_deadband(rc_data.rocker_r1);
+    rc_data.rocker_r_ = rocker_deadband(rc_data.rocker_r_);
+
+    //通道匹配遥控器设置
+    rc_data.swa = ch[4] / SBUS_SW_DIV;
+    rc_data.swb = ch[5] / SBUS_SW_DIV;
+    rc_data.swc = ch[6] / SBUS_SW_DIV;
+    rc_data.swd = ch[7] / SBUS_SW_DIV;
+
+    rc_data.vra = ch[8];
+    rc_data.vrb = ch[9];
+}
+
+static void Decode_Sbus()
 {
     if (rc_uart_instance->rx_buffer[0] != SBUS_HEADER) return;
 
-    int16_t *ch = rc_ctrl->channel;
+    int16_t *ch = rc_data.channel;
     const uint8_t * buf = rc_uart_instance->rx_buffer;
 
     ch[0]  = ((buf[1]     | buf[2]<<8) & 0x07FF) - SBUS_MID;
@@ -64,26 +91,21 @@ static void Subs_Decode_Fs()
 }
 
 
-static void Remote_fs_RxCallback()
-{
-    // DaemonReload(rc_daemon_instance); // 先喂狗
-    Subs_Decode_Fs();//协议解析
-    Channel_to_Ctrl_Fs();//通道值映射到遥控器控的实际按键控制
-}
-
 // static void RCLostCallback()
 // {
-//     memset(rc_ctrl, 0, sizeof(RC_Fs_Ctrl_s));
+//     memset(rc_data, 0, sizeof(RC_Fs_Ctrl_s));
 //     USARTServiceInit(rc_usart_instance);
 // }
 
-RC_Fs_Ctrl_s* Remote_Fs_Init(UART_HandleTypeDef *usart_handle)
+RC_Fs_Ctrl_s* RC_Fs_Init_Sbus(UART_HandleTypeDef *usart_handle)
 {
     UART_Init_Config conf;
     conf.callback = Remote_fs_RxCallback;
     conf.huart_ptr = usart_handle;
     conf.rx_buffer_size = RC_FS_RXBUFF_SIZE;
     rc_uart_instance = UART_Init(&conf);
+
+    rc_data.type = RC_TYPE_SBUS;
 
     // 进行守护进程的注册,用于定时检查遥控器是否正常工作
     // Daemon_Init_Config_s daemon_conf = {
@@ -93,5 +115,63 @@ RC_Fs_Ctrl_s* Remote_Fs_Init(UART_HandleTypeDef *usart_handle)
     // };
     // rc_daemon_instance = DaemonRegister(&daemon_conf);
 
-    return rc_ctrl;
+    return &rc_data;
 }
+
+
+
+
+
+/**-------------Ibus Fuction-------------- */
+
+// 'ibus'模块的私有函数,计算校验和
+static uint16_t IBUS_Checksum(uint8_t *buf)
+{
+    uint16_t chksum = 0xFFFF;
+    for (int i = 0; i < IBUS_DATA_LEN - 2; i++)
+        chksum -= buf[i];
+    return chksum;
+}
+
+/**
+ * @brief 'ibus'模块的私有函数,解码
+ */
+static void Decode_Ibus()
+{
+    uint8_t *rx_buff = rc_uart_instance->rx_buffer;//接收缓存
+    int16_t *ch = rc_data.channel;
+
+    //帧头匹配
+    if (rx_buff[0] != IBUS_HEADER) return;
+
+    //校验和
+    uint16_t sum = IBUS_Checksum(rx_buff);
+    uint16_t rxsum = rx_buff[30] | (rx_buff[31] << 8);
+    if (sum != rxsum) return;
+
+
+    //解析通道数据
+    for (int i = 0; i < 14; i++)
+        ch[i] = (rx_buff[2 + i * 2] | (rx_buff[3 + i * 2] << 8)) - IBUS_OFFSET;
+}
+
+/**
+ * @brief 'ibus'模块的公有函数,解码
+ * @param 
+ * 
+ */
+RC_Fs_Ctrl_s *RC_Fs_Init_Ibus(UART_HandleTypeDef *huart)
+{
+    UART_Init_Config config;
+    config.rx_buffer_size = IBUS_DATA_LEN;
+    config.huart_ptr = huart;
+    config.callback = Remote_fs_RxCallback;
+    rc_uart_instance = UART_Init(&config);
+
+    rc_data.type = RC_TYPE_IBUS;
+
+    return &rc_data;
+}
+
+
+/*-----------------------------------------------------*/

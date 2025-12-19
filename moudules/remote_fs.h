@@ -4,13 +4,22 @@
 #include "main.h"
 #include "usart.h"
 
-#define FS_RC_SW_UP ((int8_t)-1)   // 开关向上时的值
-#define FS_RC_SW_MID ((int8_t)0)  // 开关中间时的值
-#define FS_RC_SW_DOWN ((int8_t)1) // 开关向下时的值
-// 三个判断开关状态的宏
-#define fs_switch_is_down(s) (s == FS_RC_SW_DOWN)
-#define fs_switch_is_mid(s) (s == FS_RC_SW_MID)
-#define fs_switch_is_up(s) (s == FS_RC_SW_UP)
+
+#define RC_SW_UP ((int16_t)-1)
+#define RC_SW_MID ((int16_t)0)
+#define RC_SW_DOWN ((int16_t)1)
+
+#define sw_is_up(s) ((s) == RC_SW_UP)
+#define sw_is_mid(s) ((s) == RC_SW_MID)
+#define sw_is_down(s) ((s) == RC_SW_DOWN)
+
+
+
+typedef enum
+{
+    RC_TYPE_SBUS,
+    RC_TYPE_IBUS
+} Type_e;
 
 typedef struct
 {
@@ -30,6 +39,8 @@ typedef struct
     int8_t swc;
     int8_t swd;
 
+    Type_e type;
+
 } RC_Fs_Ctrl_s;
 
 /**
@@ -37,8 +48,8 @@ typedef struct
  * @return RC_Fs_Ctrl_s* 遥控器数据指针
  * @attention 使用前需要确定自己使用的Fs遥控器通道配置,并在`Channel_to_Ctrl_Fs`中进行确认何修改
  */
-RC_Fs_Ctrl_s* Remote_Fs_Init(UART_HandleTypeDef *usart_handle);
-
+RC_Fs_Ctrl_s* RC_Fs_Init_Sbus(UART_HandleTypeDef *usart_handle);
+RC_Fs_Ctrl_s *RC_Fs_Init_Ibus(UART_HandleTypeDef *huart);
 
 
 

@@ -2,7 +2,6 @@
 #include "butterfly.h"
 #include "butterfly_task.h"
 #include "tim.h"
-#include "ibus.h"
 #include "motor.h"
 #include "as5600.h"
 #include "arm_math.h"
@@ -20,19 +19,19 @@ static RC_Fs_Ctrl_s *rc_fs;
 static float angle_l;
 static float angle_r;
 static float time;
-static float w = 8;
+static float w = 8;//角速度,单位:rad/s
 
 static float Al = 100;
-static float bl;
+static float bl = 20;
 static float Ar = 100;
-static float br;
+static float br = 20;
 /*----------------------------------------------------*/
 
 /*---------iic读取寄存器的相关变量-----------*/
-static uint16_t reg_add_r = 0x19;
-static uint8_t data_r[2];
-static uint16_t reg_add_w = 0x00;
-static uint8_t data_w = 0b00001000;
+// static uint16_t reg_add_r = 0x19;
+// static uint8_t data_r[2];
+// static uint16_t reg_add_w = 0x00;
+// static uint8_t data_w = 0b00001000;
 /*----------------------------------------*/
 
 static float dt;
@@ -101,43 +100,32 @@ void Butterfly_Init()
     motorConfig.setting.motor_offset = 218.0f;
     motor_r = Motor_Init(&motorConfig);//正面
 
-
-    // rc_fs_i6x = Remote_Fs_Init(&huart1);
-    rc_fs = Ibus_Init(&huart2);
-
+    rc_fs = RC_Fs_Init_Ibus(&huart2);
 
 }
 
-static void Control_Rise_Fall()
-{
 
-}
-
-static void Control_Direction()
-{
-
-}
 
 static void RemoteControl()
 {
-    if (fs_switch_is_down(rc_fs->swd)){
+    if (sw_is_down(rc_fs->swd)){
         butterfly_mode = BUTTERFLY_MODE_STOP;
         return;
     }
 
-    if (fs_switch_is_up(rc_fs->swa) && fs_switch_is_up(rc_fs->swb)){
+    if (sw_is_up(rc_fs->swa) && sw_is_up(rc_fs->swb)){
         butterfly_mode = BUTTERFLY_MODE_POSITION;
 
-        angle_l = (rc_fs->rocker_l1) / 1000.0f * 360.0f;
-        angle_r = (rc_fs->rocker_l1) / 1000.0f * 360.0f;
+        angle_l = (rc_fs->rocker_l1) / 500.0f * 90.0f;
+        angle_r = (rc_fs->rocker_l1) / 500.0f * 90.0f;
 
-        if (angle_l < -80) angle_l = 80;
-        if (angle_r < -80) angle_r = 80;
-        if (angle_l > 90) angle_l = 90;
-        if (angle_r > 90) angle_r = 90;
+        if (angle_l < -80) angle_l = -80;
+        if (angle_r < -80) angle_r = -80;
+        if (angle_l > 100) angle_l = 90;
+        if (angle_r > 100) angle_r = 90;
 
     }
-    else if(fs_switch_is_up(rc_fs->swa) && fs_switch_is_mid(rc_fs->swb)){
+    else if(sw_is_up(rc_fs->swa) && sw_is_down(rc_fs->swb)){
         butterfly_mode = BUTTERFLY_MODE_FLYING;
 
         angle_l = Al * arm_sin_f32(w * time) + bl;
@@ -148,6 +136,12 @@ static void RemoteControl()
 
 static void MotorControl()
 {
+    //前馈计算,似乎可以直接移至motor.c中
+    feedforward_l = 50 * arm_cos_f32(MotorGetAngle(motor_l) * 3.14f / 180.0f);
+    feedforward_r = -100 * arm_cos_f32(MotorGetAngle(motor_r) * 3.14f / 180.0f);
+    MotorSetFeedforward(motor_l, feedforward_l);
+    MotorSetFeedforward(motor_r, feedforward_r);
+
     switch (butterfly_mode)
     {
         case BUTTERFLY_MODE_POSITION:
@@ -155,7 +149,6 @@ static void MotorControl()
             MotorEnable(motor_l);
             MotorEnable(motor_r);
             
-
             MotorSetRef(motor_l, angle_l);
             MotorSetRef(motor_r, angle_r);
             
@@ -164,9 +157,6 @@ static void MotorControl()
             //飞行模式,通过遥控器控制翅膀速度,转向,升降...
             MotorEnable(motor_l);
             MotorEnable(motor_r);
-
-            Control_Rise_Fall();
-            Control_Direction();
 
             MotorSetRef(motor_l, angle_l);
             MotorSetRef(motor_r, angle_r);
@@ -187,20 +177,9 @@ void Butterfly_Task()
     dt = DWT_GetDeltaT_s(&last_t);
 
     RemoteControl();
-    // MotorControl();
+    MotorControl();
 
     // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
     // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
-
-    feedforward_l = 50 * arm_cos_f32(MotorGetAngle(motor_l) * 3.14f / 180.0f);
-    feedforward_r = -100 * arm_cos_f32(MotorGetAngle(motor_r) * 3.14f / 180.0f);
-    MotorSetFeedforward(motor_l, feedforward_l);
-    MotorSetFeedforward(motor_r, feedforward_r);
-
-    angle_l = Al * arm_sin_f32(w * time) + 20;
-    angle_r = Ar * arm_sin_f32(w * time) + 20;
-
-    MotorSetRef(motor_l, angle_l);
-    MotorSetRef(motor_r, angle_r);
 
 }

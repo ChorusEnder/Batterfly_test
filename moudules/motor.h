@@ -10,6 +10,13 @@
 #define VALUE_COMPARE 1000 -1
 #define MOTOR_COUNT 4
 
+#ifndef ANG_TO_RAD
+#define ANG_TO_RAD 3.1416 / 180.0f //角度转弧度
+#endif
+
+#ifndef RAD_TO_ANG
+#define RAD_TO_ANG 180.0f / 3.1416f //弧度转角度
+#endif
 
 typedef enum {
     MOTOR_DIR_NORMAL = 0,

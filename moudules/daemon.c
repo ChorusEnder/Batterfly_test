@@ -22,13 +22,14 @@ void DaemonTask(void)
     for (uint8_t i = 0; i < idx; i++) {
         instance = &daemon_instances[i];
 
-        if (instance->reload_count > 0) {
-            instance->reload_count--;
+        if (instance->temp_count > 0) {
+            instance->temp_count--;
         } else {
             instance->callback(instance->owner_id);
         }
     }
 }
+
 
 void DaemonReload(Daemon_Instance *instance)
 {

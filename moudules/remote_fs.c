@@ -94,7 +94,8 @@ static void Decode_Sbus()
 static void RCLostCallback()
 {
     memset(&rc_data, 0, sizeof(RC_Fs_Ctrl_s));
-    // USARTServiceInit(rc_uart_instance);
+
+    
 }
 
 RC_Fs_Ctrl_s* RC_Fs_Init_Sbus(UART_HandleTypeDef *usart_handle)
@@ -170,6 +171,14 @@ RC_Fs_Ctrl_s *RC_Fs_Init_Ibus(UART_HandleTypeDef *huart)
     rc_uart_instance = UART_Init(&config);
 
     rc_data.type = RC_TYPE_IBUS;
+
+    Daemon_Init_Config_s daemon_conf = {
+        .reload_count = 10, 
+        .init_count = 20,
+        .callback = RCLostCallback,
+        .owner_id = NULL, // 只有1个遥控器,不需要owner_id
+    };
+    rc_daemon_instance = DaemonInit(&daemon_conf);
 
     return &rc_data;
 }

@@ -41,7 +41,7 @@ moudules/as5600.c \
 moudules/motor.c \
 moudules/pid.c \
 moudules/remote_fs.c \
-moudules/deamon.c \
+moudules/daemon.c \
 bsp/bsp_uart.c \
 bsp/dwt.c \
 Core/Src/main.c \

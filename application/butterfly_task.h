@@ -5,6 +5,7 @@
 #include "butterfly.h"
 #include "motor.h"
 #include "dwt.h"
+#include "daemon.h"
 
 
 osThreadId motorTaskHandle;
@@ -28,15 +29,24 @@ const osThreadAttr_t angleTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal1,
 };
 
+osThreadId daemonTaskHandle;
+const osThreadAttr_t daemonTask_attributes = {
+  .name = "daemonTask",
+  .stack_size = 128 * 2,
+  .priority = (osPriority_t) osPriorityNormal1,
+};
+
 void motorTASK(void *argument);
 void butterflyTASK(void *argument);
 void angleTASK(void *argument);
+void daemonTASK(void *argument);
 
 void OSTask_Init(void)
 {
     motorTaskHandle = osThreadNew(motorTASK, NULL, &motorTask_attributes);
     butterflyTaskHandle = osThreadNew(butterflyTASK, NULL, &butterflyTask_attributes);
     angleTaskHandle = osThreadNew(angleTASK, NULL, &angleTask_attributes);
+    daemonTaskHandle = osThreadNew(daemonTASK, NULL, &daemonTask_attributes);
 }
 
 void motorTASK(void *argument)
@@ -69,7 +79,17 @@ void angleTASK(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        // MotorMeasure();
+        MotorMeasure();
         osDelay(2);
+    }
+}
+
+void daemonTASK(void *argument)
+{
+    /* Infinite loop */
+    for(;;)
+    {
+        DaemonTask();
+        osDelay(10);
     }
 }

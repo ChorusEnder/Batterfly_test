@@ -1,6 +1,6 @@
 #include "remote_fs.h"
 #include "bsp_uart.h"
-// #include "daemon.h"
+#include "daemon.h"
 #include <stdlib.h>
 
 /**-------------I-bus define-------------- */
@@ -21,7 +21,7 @@
 
 static RC_Fs_Ctrl_s rc_data; // 遥控器数据
 static UART_Instance *rc_uart_instance;
-// static DaemonInstance *rc_daemon_instance;
+static Daemon_Instance *rc_daemon_instance;
 
 //函数原型
 static void Decode_Ibus();
@@ -31,7 +31,7 @@ static void Ch_to_Ctrl_Fs();
 //接收回调函数
 static void Remote_fs_RxCallback()
 {
-    // DaemonReload(rc_daemon_instance); // 先喂狗
+    DaemonReload(rc_daemon_instance); // 先喂狗
 
     if (rc_data.type == RC_TYPE_SBUS)
         Decode_Sbus();//协议解析
@@ -91,11 +91,11 @@ static void Decode_Sbus()
 }
 
 
-// static void RCLostCallback()
-// {
-//     memset(rc_data, 0, sizeof(RC_Fs_Ctrl_s));
-//     USARTServiceInit(rc_usart_instance);
-// }
+static void RCLostCallback()
+{
+    memset(&rc_data, 0, sizeof(RC_Fs_Ctrl_s));
+    // USARTServiceInit(rc_uart_instance);
+}
 
 RC_Fs_Ctrl_s* RC_Fs_Init_Sbus(UART_HandleTypeDef *usart_handle)
 {
@@ -108,12 +108,13 @@ RC_Fs_Ctrl_s* RC_Fs_Init_Sbus(UART_HandleTypeDef *usart_handle)
     rc_data.type = RC_TYPE_SBUS;
 
     // 进行守护进程的注册,用于定时检查遥控器是否正常工作
-    // Daemon_Init_Config_s daemon_conf = {
-    //     .reload_count = 10, 
-    //     .callback = RCLostCallback,
-    //     .owner_id = NULL, // 只有1个遥控器,不需要owner_id
-    // };
-    // rc_daemon_instance = DaemonRegister(&daemon_conf);
+    Daemon_Init_Config_s daemon_conf = {
+        .reload_count = 10, 
+        .init_count = 20,
+        .callback = RCLostCallback,
+        .owner_id = NULL, // 只有1个遥控器,不需要owner_id
+    };
+    rc_daemon_instance = DaemonInit(&daemon_conf);
 
     return &rc_data;
 }

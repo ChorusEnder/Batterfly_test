@@ -65,7 +65,7 @@ typedef struct {
     Loop_Type_e loop_type;
     PID_Instance_s angle_pid;
     PID_Instance_s speed_pid;
-    float feedward;
+    float feedforward;
 
 } Motor_Controller_s;
 
@@ -77,7 +77,7 @@ typedef struct {
     Motor_Feedback_Reverse_Flag_e flag_feedback_reverse; // 反馈反转标志
     Motor_State_e motor_state;
     float motor_offset;
-    float feedforward;
+    
 } Motor_Setting_s;
 
 

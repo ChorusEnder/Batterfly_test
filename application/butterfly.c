@@ -105,7 +105,6 @@ void Butterfly_Init()
 }
 
 
-
 static void RemoteControl()
 {
     if (sw_is_down(rc_fs->swd)){

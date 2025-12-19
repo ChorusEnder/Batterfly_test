@@ -69,7 +69,7 @@ void angleTASK(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        MotorMeasure();
+        // MotorMeasure();
         osDelay(2);
     }
 }

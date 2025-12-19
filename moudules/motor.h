@@ -97,10 +97,22 @@ Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config);
 void MotorTask();
 void MotorMeasure();
 
+//设定电机输出ref
 void MotorSetRef(Motor_Instance_s *motor, float ref);
+
+//使能电机
 void MotorEnable(Motor_Instance_s *motor);
+
+//停止电机
 void MotorStop(Motor_Instance_s *motor);
+
+//设置电机反馈角度方向
 void MotorSetFeedforward(Motor_Instance_s *motor, float feedforward);
+
+//获取当前电机角度
 float MotorGetAngle(const Motor_Instance_s *motor);
+
+//改变控制环
+void MotorChangeLoop(Motor_Instance_s *motor, Loop_Type_e loop_type);
 
 #endif

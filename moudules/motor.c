@@ -22,7 +22,7 @@ Motor_Instance_s* Motor_Init(Motor_Init_Config_s *config)
     HAL_TIM_PWM_Start(instance->setting.pwm_config.htim, instance->setting.pwm_config.channel1);
     HAL_TIM_PWM_Start(instance->setting.pwm_config.htim, instance->setting.pwm_config.channel2);
 
-    TMAG5273_Init(config->setting.hi2c);
+    // TMAG5273_Init(config->setting.hi2c);
 
     motor_instance[idx++] = instance;
     return instance;
@@ -67,9 +67,9 @@ void MotorMeasure()
 {
     Motor_Instance_s *motor;
 
-    static uint8_t flag;
-    float delta_angle;
-    float speed;
+    // static uint8_t flag;
+    // float delta_angle;
+    // float speed;
 
     for(int i = 0; i < MOTOR_COUNT; i++)
     {
@@ -153,6 +153,7 @@ void MotorTask()
         //前馈,须在反转判断之后
         pid_ref += setting->feedforward;
 
+
         if (motor->setting.motor_state == MOTOR_STOP) {
             pid_ref = 0; 
         }
@@ -187,4 +188,10 @@ void MotorSetFeedforward(Motor_Instance_s *motor, float feedforward)
 float MotorGetAngle(const Motor_Instance_s *motor)
 {
     return motor->measures.angle;
+}
+
+
+void MotorChangeLoop(Motor_Instance_s *motor, Loop_Type_e loop_type)
+{
+    motor->controller.loop_type = loop_type;
 }

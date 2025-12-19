@@ -157,8 +157,8 @@ static void MotorControl()
     MotorEnable(motor_r);
 
     //默认角度闭环控制
-    MotorChangeLoop(motor_l, OPEN_LOOP);
-    MotorChangeLoop(motor_r, OPEN_LOOP);
+    MotorChangeLoop(motor_l, ANGLE_LOOP);
+    MotorChangeLoop(motor_r, ANGLE_LOOP);
 
     switch (butterfly_mode)
     {

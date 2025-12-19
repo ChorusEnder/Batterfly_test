@@ -47,7 +47,6 @@ void Butterfly_Init()
             // .loop_type = ANGLE_LOOP | SPEED_LOOP,
             .loop_type = OPEN_LOOP,
             .pid_ref = 0.0f,
-            .feedward  = 0.0f,
             .angle_pid = {
                 .kp = 5.0f,
                 .ki = 0.0f,
@@ -77,7 +76,7 @@ void Butterfly_Init()
             }
         },
         .setting = {
-            .hi2c = &hi2c1,
+            .hi2c = &hi2c2,
             .pwm_config = {
                 .htim = &htim1,
                 .channel1 = TIM_CHANNEL_1,
@@ -86,7 +85,7 @@ void Butterfly_Init()
             .flag_motor_reverse = MOTOR_DIR_NORMAL,
             .flag_feedback_reverse = FEEDBACK_DIR_NORMAL,
             .motor_state = MOTOR_ENABLE,
-            .motor_offset = 35.0f,
+            .motor_offset = 28.0f,
         }
     };
     motor_l = Motor_Init(&motorConfig);
@@ -97,7 +96,7 @@ void Butterfly_Init()
     motorConfig.setting.pwm_config.channel2 = TIM_CHANNEL_4;
     motorConfig.setting.flag_motor_reverse = MOTOR_DIR_REVERSE;
     motorConfig.setting.flag_feedback_reverse = FEEDBACK_DIR_REVERSE;
-    motorConfig.setting.motor_offset = 218.0f;
+    motorConfig.setting.motor_offset = 216.0f;
     motor_r = Motor_Init(&motorConfig);//正面
 
     rc_fs = RC_Fs_Init_Ibus(&huart2);

@@ -90,7 +90,7 @@ void TMAG5273_Init(I2C_HandleTypeDef *hi2c)
 {
     //配置数组
     uint16_t reg_add_w[REGISTER_CNT] = {DEVICE_CONFIG_1, DEVICE_CONFIG_2, SENSOR_CONFIG_1, SENSOR_CONFIG_2};
-    uint8_t data_w[REGISTER_CNT] = {    0b00001000 ,     0b00000010,      0b00110000,      0b00000110};
+    uint8_t data_w[REGISTER_CNT] = {    0b00001000 ,     0b00000010,      0b00110000,      0b00000100};
 
     for(int i = 0; i < REGISTER_CNT; i++)
     {

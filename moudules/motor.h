@@ -70,6 +70,7 @@ typedef struct {
     Motor_Feedback_Reverse_Flag_e flag_feedback_reverse; // 反馈反转标志
     Motor_State_e motor_state;
     float motor_offset;
+    float feedforward;
 } Motor_Setting_s;
 
 
@@ -92,7 +93,7 @@ void MotorMeasure();
 void MotorSetRef(Motor_Instance_s *motor, float ref);
 void MotorEnable(Motor_Instance_s *motor);
 void MotorStop(Motor_Instance_s *motor);
-
-
+void MotorSetFeedforward(Motor_Instance_s *motor, float feedforward);
+float MotorGetAngle(const Motor_Instance_s *motor);
 
 #endif

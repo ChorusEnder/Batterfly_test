@@ -11,6 +11,8 @@
 static butterfly_mode_e butterfly_mode;
 static Motor_Instance_s* motor_l;
 static Motor_Instance_s* motor_r;
+float feedforward_l;
+float feedforward_r;
 static RC_Fs_Ctrl_s *rc_fs;
 
 
@@ -18,7 +20,7 @@ static RC_Fs_Ctrl_s *rc_fs;
 static float angle_l;
 static float angle_r;
 static float time;
-static float w = 20;
+static float w = 8;
 
 static float Al = 100;
 static float bl;
@@ -48,11 +50,11 @@ void Butterfly_Init()
             .pid_ref = 0.0f,
             .feedward  = 0.0f,
             .angle_pid = {
-                .kp = 1.0f,
-                .ki = 0.1f,
+                .kp = 5.0f,
+                .ki = 0.0f,
                 .kd = 0.0f,
                 .deadband = 1.0f,
-                .maxout = VALUE_COMPARE,
+                .maxout = 500,
                 .Improve = PID_T_Intergral | PID_I_limit | PID_D_Filter | PID_OutputFilter | PID_Changing_I,
                 .core_a = 100,
                 .core_b = 50,
@@ -85,6 +87,7 @@ void Butterfly_Init()
             .flag_motor_reverse = MOTOR_DIR_NORMAL,
             .flag_feedback_reverse = FEEDBACK_DIR_NORMAL,
             .motor_state = MOTOR_ENABLE,
+            .motor_offset = 35.0f,
         }
     };
     motor_l = Motor_Init(&motorConfig);
@@ -93,8 +96,9 @@ void Butterfly_Init()
     motorConfig.setting.pwm_config.htim = &htim1;
     motorConfig.setting.pwm_config.channel1 = TIM_CHANNEL_3;
     motorConfig.setting.pwm_config.channel2 = TIM_CHANNEL_4;
-    motorConfig.setting.flag_motor_reverse = MOTOR_DIR_NORMAL;
-    motorConfig.setting.flag_feedback_reverse = FEEDBACK_DIR_NORMAL;
+    motorConfig.setting.flag_motor_reverse = MOTOR_DIR_REVERSE;
+    motorConfig.setting.flag_feedback_reverse = FEEDBACK_DIR_REVERSE;
+    motorConfig.setting.motor_offset = 218.0f;
     motor_r = Motor_Init(&motorConfig);//正面
 
 
@@ -150,6 +154,7 @@ static void MotorControl()
             //定点模式,通过遥控器控制翅膀位置           
             MotorEnable(motor_l);
             MotorEnable(motor_r);
+            
 
             MotorSetRef(motor_l, angle_l);
             MotorSetRef(motor_r, angle_r);
@@ -159,6 +164,9 @@ static void MotorControl()
             //飞行模式,通过遥控器控制翅膀速度,转向,升降...
             MotorEnable(motor_l);
             MotorEnable(motor_r);
+
+            Control_Rise_Fall();
+            Control_Direction();
 
             MotorSetRef(motor_l, angle_l);
             MotorSetRef(motor_r, angle_r);
@@ -179,12 +187,20 @@ void Butterfly_Task()
     dt = DWT_GetDeltaT_s(&last_t);
 
     RemoteControl();
-    MotorControl();
-
-    MotorSetRef(motor_l, angle_l);
-    MotorSetRef(motor_r, angle_r);
+    // MotorControl();
 
     // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
     // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
+
+    feedforward_l = 50 * arm_cos_f32(MotorGetAngle(motor_l) * 3.14f / 180.0f);
+    feedforward_r = -100 * arm_cos_f32(MotorGetAngle(motor_r) * 3.14f / 180.0f);
+    MotorSetFeedforward(motor_l, feedforward_l);
+    MotorSetFeedforward(motor_r, feedforward_r);
+
+    angle_l = Al * arm_sin_f32(w * time) + 20;
+    angle_r = Ar * arm_sin_f32(w * time) + 20;
+
+    MotorSetRef(motor_l, angle_l);
+    MotorSetRef(motor_r, angle_r);
 
 }

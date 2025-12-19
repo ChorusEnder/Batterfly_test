@@ -79,10 +79,17 @@ void MotorMeasure()
         
         //角度获取
         float raw_angle = TMAG5273_GetAngle(motor->setting.hi2c);
-        motor->measures.angle = Deal_Angle(raw_angle, motor->setting.motor_offset);
-        if (motor->setting.flag_feedback_reverse == FEEDBACK_DIR_REVERSE) {
-            motor->measures.angle *= -1;
+        if (motor->setting.motor_offset == 0.0f){
+            motor->measures.angle = raw_angle;
         }
+        else{
+            motor->measures.angle = Deal_Angle(raw_angle, motor->setting.motor_offset);
+            if (motor->setting.flag_feedback_reverse == FEEDBACK_DIR_REVERSE) {
+                motor->measures.angle *= -1;
+            }
+        }
+        
+        
 
         // //速度计算
         // delta_angle = motor->measures.angle - motor->measures.angle_last;
@@ -131,6 +138,7 @@ void MotorTask()
         controller = &motor->controller;
         pid_ref = controller->pid_ref;
 
+        
 
         //角度环计算
         if (controller->loop_type & ANGLE_LOOP) {
@@ -143,21 +151,26 @@ void MotorTask()
             pid_ref = PIDCalculate(&controller->speed_pid, pid_measure, pid_ref);
         }
 
-        if (setting->flag_motor_reverse == MOTOR_DIR_REVERSE) {
-            pid_ref *= -1;
-        }
-
+    
         //前馈
-        if(pid_ref > 0){
-            pid_ref += controller->feedward;
-        }else if(pid_ref < 0){
-            pid_ref -= controller->feedward;
-        }
+        // if(pid_ref > 0){
+        //     pid_ref += controller->feedward;
+        // }else if(pid_ref < 0){
+        //     pid_ref -= controller->feedward;
+        // }
+
+        
 
 
         if (motor->setting.motor_state == MOTOR_STOP) {
             pid_ref = 0; 
         }
+
+        if (setting->flag_motor_reverse == MOTOR_DIR_REVERSE) {
+            pid_ref *= -1;
+        }
+
+        pid_ref += setting->feedforward;
 
         motor->controller.set = pid_ref;
         MotorDrive((int16_t)motor->controller.set, &setting->pwm_config);
@@ -179,4 +192,14 @@ void MotorEnable(Motor_Instance_s *motor)
 void MotorStop(Motor_Instance_s *motor)
 {
     motor->setting.motor_state = MOTOR_STOP;
+}
+
+void MotorSetFeedforward(Motor_Instance_s *motor, float feedforward)
+{
+    motor->setting.feedforward = feedforward;
+}
+
+float MotorGetAngle(const Motor_Instance_s *motor)
+{
+    return motor->measures.angle;
 }

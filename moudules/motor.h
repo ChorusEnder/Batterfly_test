@@ -71,7 +71,7 @@ typedef struct {
 
 //电机设置
 typedef struct {
-    I2C_HandleTypeDef *hi2c;//iic句柄指针
+
     Motor_PWM_Config_s pwm_config;
     Motor_Reverse_Flag_e flag_motor_reverse; // 反转标志
     Motor_Feedback_Reverse_Flag_e flag_feedback_reverse; // 反馈反转标志

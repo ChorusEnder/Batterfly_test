@@ -3,16 +3,19 @@
 #include "butterfly_task.h"
 #include "tim.h"
 #include "motor.h"
-#include "as5600.h"
+// #include "as5600.h"
 #include "arm_math.h"
 #include "remote_fs.h"
+// #include "bsp_adc.h"
 
 static butterfly_mode_e butterfly_mode;
 static Motor_Instance_s* motor_l;
 static Motor_Instance_s* motor_r;
-float feedforward_l;
-float feedforward_r;
+static float feedforward_l;
+static float feedforward_r;
 static RC_Fs_Ctrl_s *rc_fs;
+
+static uint16_t *adc_values;
 
 
 /*-------------------以下是Asin(wt)+B有关的参数---------*/
@@ -41,6 +44,8 @@ void Butterfly_Init()
 {
     OSTask_Init();
     DWT_Init(72);
+    // adc_values = BSP_ADC_Init(&hadc1);
+    rc_fs = RC_Fs_Init_Ibus(&huart2);
 
     Motor_Init_Config_s motorConfig = {
         .controller = {
@@ -76,7 +81,6 @@ void Butterfly_Init()
             }
         },
         .setting = {
-            .hi2c = &hi2c2,
             .pwm_config = {
                 .htim = &htim1,
                 .channel1 = TIM_CHANNEL_1,
@@ -90,7 +94,6 @@ void Butterfly_Init()
     };
     motor_l = Motor_Init(&motorConfig);
 
-    motorConfig.setting.hi2c = &hi2c1;
     motorConfig.setting.pwm_config.htim = &htim1;
     motorConfig.setting.pwm_config.channel1 = TIM_CHANNEL_3;
     motorConfig.setting.pwm_config.channel2 = TIM_CHANNEL_4;
@@ -98,8 +101,6 @@ void Butterfly_Init()
     motorConfig.setting.flag_feedback_reverse = FEEDBACK_DIR_REVERSE;
     motorConfig.setting.motor_offset = 216.0f;
     motor_r = Motor_Init(&motorConfig);//正面
-
-    rc_fs = RC_Fs_Init_Ibus(&huart2);
 
 }
 
@@ -209,8 +210,5 @@ void Butterfly_Task()
 
     RemoteControl();
     MotorControl();
-
-    // TMAG5273_ReadReg(&hi2c2, &reg_add_r, data_r);
-    // TMAG5273_WriteReg(&hi2c2, &reg_add_w, &data_w);
 
 }

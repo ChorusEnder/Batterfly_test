@@ -132,8 +132,8 @@ static void RemoteControl()
     {
         butterfly_mode = BUTTERFLY_MODE_MECHANISM;
 
-        angle_l = 300 * (rc_fs->rocker_l1 + 500) / 1000.0f;
-        angle_r = 300 * (rc_fs->rocker_l1 + 500) / 1000.0f;
+        angle_l = 1.6 * rc_fs->rocker_l1;
+        angle_r = 1.6 * rc_fs->rocker_l1;
 
     }
     else if(sw_is_down(rc_fs->swa) && sw_is_down(rc_fs->swb))

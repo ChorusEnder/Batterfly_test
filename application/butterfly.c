@@ -3,10 +3,8 @@
 #include "butterfly_task.h"
 #include "tim.h"
 #include "motor.h"
-// #include "as5600.h"
 #include "arm_math.h"
 #include "remote_fs.h"
-// #include "bsp_adc.h"
 
 static butterfly_mode_e butterfly_mode;
 static Motor_Instance_s* motor_l;
@@ -86,7 +84,7 @@ void Butterfly_Init()
                 .channel1 = TIM_CHANNEL_1,
                 .channel2 = TIM_CHANNEL_2,
             },
-            .flag_motor_reverse = MOTOR_DIR_NORMAL,
+            .flag_motor_reverse = MOTOR_DIR_REVERSE,
             .flag_feedback_reverse = FEEDBACK_DIR_NORMAL,
             .motor_state = MOTOR_ENABLE,
             .motor_offset = 28.0f,
@@ -97,7 +95,7 @@ void Butterfly_Init()
     motorConfig.setting.pwm_config.htim = &htim1;
     motorConfig.setting.pwm_config.channel1 = TIM_CHANNEL_3;
     motorConfig.setting.pwm_config.channel2 = TIM_CHANNEL_4;
-    motorConfig.setting.flag_motor_reverse = MOTOR_DIR_REVERSE;
+    motorConfig.setting.flag_motor_reverse = MOTOR_DIR_NORMAL;
     motorConfig.setting.flag_feedback_reverse = FEEDBACK_DIR_REVERSE;
     motorConfig.setting.motor_offset = 216.0f;
     motor_r = Motor_Init(&motorConfig);//正面
@@ -132,8 +130,8 @@ static void RemoteControl()
     {
         butterfly_mode = BUTTERFLY_MODE_MECHANISM;
 
-        angle_l = 1.6 * rc_fs->rocker_l1;
-        angle_r = 1.6 * rc_fs->rocker_l1;
+        angle_l = 2 * rc_fs->rocker_l1;
+        angle_r = 2 * rc_fs->rocker_l1;
 
     }
     else if(sw_is_down(rc_fs->swa) && sw_is_down(rc_fs->swb))

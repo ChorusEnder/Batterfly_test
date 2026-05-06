@@ -11,7 +11,6 @@ typedef enum {
     BUTTERFLY_MODE_MECHANISM,// 机构模式:通过遥控器控制振频
 } butterfly_mode_e;
 
-
 void Butterfly_Init();
 void Butterfly_Task();
 
